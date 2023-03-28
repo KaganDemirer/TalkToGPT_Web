@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>TalkToGPT Web</title>
+    <style>
+        body{
+            background-color: green;
+        }
+        table {
+            width: 100%;
+        }
+        div {
+            padding: 10px;
+        }
+        .speech-bubble {
+            background-color: grey;
+            padding: 10px;
+            border-radius: 10px;
+            margin: 10px;
+            max-width: 30%;
+        }
+        .left {
+            text-align: left;
+            /* self align left */
+            margin-right: auto;
+        }
+        .right {
+            text-align: right;
+            /* self align right */
+            margin-left: auto;
+        }
+        .mic {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            z-index: 9999;
+            width: 30px;
+            height: 30px;
+            background-color: white;
+            border-radius: 50%;
+            padding: 10px;
+            visibility: hidden;
+        }
+    </style>
+</head>
+<body>
+    <img class="mic" src="https://cdn-icons-png.flaticon.com/512/1082/1082810.png">
+    <table id="messages">
+    </table>
+</body>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    document.addEventListener("keydown", function(event) {
+        if (event.code === "Space") {
+            listen();
+            $(".mic").css("visibility", "visible");
+        }
+    });
+
+    function listen() {
+        $.ajax({
+            type: "GET",
+            url: "/listen",
+            success: function(response) {
+                var table = document.getElementById("messages");
+                var row = table.insertRow(0);
+                var cell = row.insertCell(0);
+                var result = response["prompt"];
+                cell.innerHTML = '<div class="speech-bubble right">' + result + '</div>';
+                $(".mic").css("visibility", "hidden");
+                ask(result);
+            }
+        });
+    }
+
+    function ask(prompt) {
+        $.ajax({
+            type: "POST",
+            url: "/chat",
+            data: JSON.stringify({ prompt: prompt }),
+            success: function(response) {
+                var table = document.getElementById("messages");
+                var row = table.insertRow(0);
+                var cell = row.insertCell(0);
+                var result = response["response"];
+                cell.innerHTML = '<div class="speech-bubble left">' + result + '</div>';
+                speak(result);
+            }
+        });
+    }
+
+    function speak(result) {
+        $.ajax({
+            type: "POST",
+            url: "/speak",
+            data: JSON.stringify({ prompt: result })
+        });
+    }
+</script>
+</html>
